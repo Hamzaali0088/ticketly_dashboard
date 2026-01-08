@@ -1,5 +1,6 @@
 import apiClient from './client';
 import { setTokens, clearTokens } from './client';
+import { API_BASE_URL } from '../config';
 
 // Auth API functions
 export const authAPI = {
@@ -49,8 +50,19 @@ export const authAPI = {
 
   // Get All Users (Admin only)
   getAllUsers: async () => {
-    const response = await apiClient.get('/auth/users');
-    return response.data;
+    try {
+      const response = await apiClient.get('/auth/users');
+      return response.data;
+    } catch (error) {
+      // Enhanced error handling
+      if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+        throw new Error(
+          `Cannot connect to backend server at ${API_BASE_URL}. ` +
+          `Please make sure the backend server is running and NEXT_PUBLIC_API_BASE_URL is set correctly in your .env.local file.`
+        );
+      }
+      throw error;
+    }
   },
 
   // Update User (Self Update)

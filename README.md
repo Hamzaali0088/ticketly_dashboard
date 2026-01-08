@@ -2,7 +2,32 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+### 1. Environment Setup
+
+Create a `.env.local` file in the root directory and set the API base URL:
+
+```bash
+# Copy the example file
+cp .env.example .env.local
+```
+
+Or create `.env.local` manually with:
+
+```env
+# API Base URL - Update this to point to your backend server
+NEXT_PUBLIC_API_BASE_URL=http://localhost:5001/api
+```
+
+For production, update it to your production API URL:
+```env
+NEXT_PUBLIC_API_BASE_URL=https://api.yourdomain.com/api
+```
+
+### 2. Run the Development Server
+
+First, make sure your backend server is running on port 5001 (or the port specified in your `.env.local` file).
+
+Then, run the development server:
 
 ```bash
 npm run dev

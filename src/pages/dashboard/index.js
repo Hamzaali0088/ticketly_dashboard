@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
-import Layout from '../../components/Layout';
-import { authAPI } from '../../lib/api/auth';
-import { adminAPI } from '../../lib/api/admin';
-import { getAccessToken } from '../../lib/api/client';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import Layout from "../../components/Layout";
+import { authAPI } from "../../lib/api/auth";
+import { adminAPI } from "../../lib/api/admin";
+import { getAccessToken } from "../../lib/api/client";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -18,14 +18,16 @@ export default function DashboardPage() {
     const checkAuthAndFetchStats = async () => {
       const accessToken = getAccessToken();
       if (!accessToken) {
-        router.push('/login');
+        router.push("/login");
         return;
       }
 
       try {
         // Fetch stats
         const [eventsRes, usersRes] = await Promise.all([
-          adminAPI.getPendingEvents().catch(() => ({ success: false, events: [] })),
+          adminAPI
+            .getPendingEvents()
+            .catch(() => ({ success: false, events: [] })),
           authAPI.getAllUsers().catch(() => ({ success: false, users: [] })),
         ]);
 
@@ -35,9 +37,9 @@ export default function DashboardPage() {
           totalTickets: 150, // Static for now
         });
       } catch (error) {
-        console.error('Error fetching stats:', error);
+        console.error("Error fetching stats:", error);
         if (error.response?.status === 401) {
-          router.push('/login');
+          router.push("/login");
         }
       } finally {
         setLoading(false);
@@ -67,12 +69,26 @@ export default function DashboardPage() {
           <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[#9CA3AF] text-sm font-medium mb-1">Pending Events</p>
-                <p className="text-3xl font-bold text-white">{stats.pendingEvents}</p>
+                <p className="text-[#9CA3AF] text-sm font-medium mb-1">
+                  Pending Events
+                </p>
+                <p className="text-3xl font-bold text-white">
+                  {stats.pendingEvents}
+                </p>
               </div>
               <div className="bg-[#9333EA] bg-opacity-20 p-3 rounded-lg">
-                <svg className="w-8 h-8 text-[#9333EA]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                <svg
+                  className="w-8 h-8 text-[#9333EA]"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
                 </svg>
               </div>
             </div>
@@ -81,12 +97,26 @@ export default function DashboardPage() {
           <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[#9CA3AF] text-sm font-medium mb-1">Total Users</p>
-                <p className="text-3xl font-bold text-white">{stats.totalUsers}</p>
+                <p className="text-[#9CA3AF] text-sm font-medium mb-1">
+                  Total Users
+                </p>
+                <p className="text-3xl font-bold text-white">
+                  {stats.totalUsers}
+                </p>
               </div>
               <div className="bg-[#9333EA] bg-opacity-20 p-3 rounded-lg">
-                <svg className="w-8 h-8 text-[#9333EA]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                <svg
+                  className="w-8 h-8 text-[#9333EA]"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                  />
                 </svg>
               </div>
             </div>
@@ -95,12 +125,26 @@ export default function DashboardPage() {
           <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[#9CA3AF] text-sm font-medium mb-1">Total Tickets</p>
-                <p className="text-3xl font-bold text-white">{stats.totalTickets}</p>
+                <p className="text-[#9CA3AF] text-sm font-medium mb-1">
+                  Total Tickets
+                </p>
+                <p className="text-3xl font-bold text-white">
+                  {stats.totalTickets}
+                </p>
               </div>
               <div className="bg-[#9333EA] bg-opacity-20 p-3 rounded-lg">
-                <svg className="w-8 h-8 text-[#9333EA]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                <svg
+                  className="w-8 h-8 text-[#9333EA]"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"
+                  />
                 </svg>
               </div>
             </div>
@@ -110,7 +154,9 @@ export default function DashboardPage() {
         {/* Recent Activity Table */}
         <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl overflow-hidden">
           <div className="p-6 border-b border-[#374151]">
-            <h2 className="text-xl font-semibold text-white">Recent Activity</h2>
+            <h2 className="text-xl font-semibold text-white">
+              Recent Activity
+            </h2>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -155,4 +201,3 @@ export default function DashboardPage() {
     </Layout>
   );
 }
-

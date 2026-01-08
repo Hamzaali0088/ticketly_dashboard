@@ -30,7 +30,8 @@ export default function EventsPage() {
         if (err.response?.status === 401) {
           router.push('/login');
         } else {
-          setError(err.response?.data?.message || 'Failed to fetch pending events');
+          const errorMessage = err.message || err.response?.data?.message || 'Failed to fetch pending events';
+          setError(errorMessage.includes('Cannot connect') ? errorMessage : `Failed to fetch pending events: ${errorMessage}`);
         }
       } finally {
         setLoading(false);
