@@ -99,5 +99,37 @@ export const authAPI = {
     clearTokens();
     return response.data;
   },
+
+  // Update User By Admin
+  updateUserByAdmin: async (userId, data) => {
+    try {
+      const response = await apiClient.put(`/auth/update/${userId}`, data);
+      return response.data;
+    } catch (error) {
+      if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+        throw new Error(
+          `Cannot connect to backend server at ${API_BASE_URL}. ` +
+          `Please make sure the backend server is running and NEXT_PUBLIC_API_BASE_URL is set correctly in your .env.local file.`
+        );
+      }
+      throw error;
+    }
+  },
+
+  // Delete User By Admin
+  deleteUserByAdmin: async (userId) => {
+    try {
+      const response = await apiClient.delete(`/auth/delete/${userId}`);
+      return response.data;
+    } catch (error) {
+      if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+        throw new Error(
+          `Cannot connect to backend server at ${API_BASE_URL}. ` +
+          `Please make sure the backend server is running and NEXT_PUBLIC_API_BASE_URL is set correctly in your .env.local file.`
+        );
+      }
+      throw error;
+    }
+  },
 };
 
