@@ -10,7 +10,13 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // Important for CORS with credentials
 });
+
+// Log API configuration in development
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+  console.log('🌐 API Client configured with baseURL:', API_BASE_URL);
+}
 
 // Request interceptor to add access token
 apiClient.interceptors.request.use(
