@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { authAPI } from "../lib/api/auth";
-import { getAccessToken, getRefreshToken } from "../lib/api/client";
+import { getAccessToken, getRefreshToken, setTokens } from "../lib/api/client";
 import { API_BASE_URL } from "../lib/config";
 
 export default function LoginPage() {
@@ -68,10 +68,20 @@ export default function LoginPage() {
 
     try {
       const response = await authAPI.login({ email, password });
-      if (response.success && response.tempToken) {
+      if (response.success) {
+        // Check if user is verified (has accessToken) or needs OTP (has tempToken)
+        if (response.accessToken && response.refreshToken) {
+          // User is verified - save tokens and redirect to dashboard
+          setTokens(response.accessToken, response.refreshToken);
+          router.push("/dashboard");
+        } else if (response.tempToken) {
+          // User is not verified - show OTP form
         setTempToken(response.tempToken);
         setOtpSent(true);
         setErrorMessage(""); // Clear any previous errors
+        } else {
+          setErrorMessage(response.message || "Login failed");
+        }
       } else {
         setErrorMessage(response.message || "Login failed");
       }
