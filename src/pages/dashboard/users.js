@@ -426,7 +426,6 @@ export default function UsersPage() {
                   >
                     <option value="user">User</option>
                     <option value="admin">Admin</option>
-                    <option value="superadmin">Super Admin</option>
                     <option value="organizer">Organizer</option>
                   </select>
                 </div>
