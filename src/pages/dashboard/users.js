@@ -16,6 +16,7 @@ export default function UsersPage() {
   const [selectedRole, setSelectedRole] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -174,6 +175,30 @@ export default function UsersPage() {
     }
   };
 
+  // Filter users based on search query
+  const filteredUsers = users.filter((user) => {
+    if (!searchQuery.trim()) return true;
+    
+    const query = searchQuery.toLowerCase();
+    const fullName = (user.fullName || user.name || '').toLowerCase();
+    const email = (user.email || '').toLowerCase();
+    const username = (user.username || '').toLowerCase();
+    const role = (user.role || '').toLowerCase();
+    const authProvider = (user.authProvider || 'email').toLowerCase();
+    const createdAt = user.createdAt
+      ? new Date(user.createdAt).toLocaleDateString().toLowerCase()
+      : '';
+    
+    return (
+      fullName.includes(query) ||
+      email.includes(query) ||
+      username.includes(query) ||
+      role.includes(query) ||
+      authProvider.includes(query) ||
+      createdAt.includes(query)
+    );
+  });
+
   if (loading) {
     return (
       <Layout>
@@ -190,7 +215,12 @@ export default function UsersPage() {
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-white">All Users</h1>
           <div className="text-[#9CA3AF] text-sm">
-            Total: <span className="text-white font-semibold">{users.length}</span>
+            Total: <span className="text-white font-semibold">{filteredUsers.length}</span>
+            {searchQuery && users.length !== filteredUsers.length && (
+              <span className="ml-2 text-[#9CA3AF]">
+                (of {users.length})
+              </span>
+            )}
           </div>
         </div>
 
@@ -200,12 +230,48 @@ export default function UsersPage() {
           </div>
         )}
 
+        {/* Search Bar */}
+        <div className="mb-6">
+          <div className="relative max-w-md">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="w-5 h-5 text-[#9CA3AF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input
+              type="text"
+              placeholder="Search users..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 bg-[#2A2A2A] border border-[#374151] rounded-lg text-white placeholder-[#6B7280] focus:outline-none focus:ring-2 focus:ring-[#9333EA] focus:border-transparent"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#9CA3AF] hover:text-white"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
+
         {users.length === 0 ? (
           <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl p-12 text-center">
             <svg className="w-16 h-16 text-[#9CA3AF] mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
             </svg>
             <p className="text-[#9CA3AF] text-lg">No users found</p>
+          </div>
+        ) : filteredUsers.length === 0 ? (
+          <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl p-12 text-center">
+            <svg className="w-16 h-16 text-[#9CA3AF] mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <p className="text-[#9CA3AF] text-lg">No users found matching your search</p>
+            <p className="text-[#6B7280] text-sm mt-2">Try different keywords</p>
           </div>
         ) : (
           <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl overflow-hidden">
@@ -240,7 +306,7 @@ export default function UsersPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#374151]">
-                  {users.map((user) => (
+                  {filteredUsers.map((user) => (
                     <tr key={user.id || user._id} className="hover:bg-[#2A2A2A] transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-white">
