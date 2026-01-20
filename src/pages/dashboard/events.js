@@ -13,6 +13,7 @@ export default function EventsPage() {
   const [approvingId, setApprovingId] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Helper function to get event ID from event object
   const getEventId = (event) => {
@@ -140,6 +141,32 @@ export default function EventsPage() {
     setSelectedEvent(null);
   };
 
+  // Filter events based on search query
+  const filteredEvents = events.filter((event) => {
+    if (!searchQuery.trim()) return true;
+    
+    const query = searchQuery.toLowerCase();
+    const title = (event.title || '').toLowerCase();
+    const description = (event.description || '').toLowerCase();
+    const location = (event.location || '').toLowerCase();
+    const date = new Date(event.date).toLocaleDateString().toLowerCase();
+    const time = (event.time || '').toLowerCase();
+    const ticketPrice = (event.ticketPrice || '').toString().toLowerCase();
+    const createdByName = (event.createdBy?.fullName || event.createdBy?.email || '').toLowerCase();
+    const createdByEmail = (event.createdBy?.email || '').toLowerCase();
+    
+    return (
+      title.includes(query) ||
+      description.includes(query) ||
+      location.includes(query) ||
+      date.includes(query) ||
+      time.includes(query) ||
+      ticketPrice.includes(query) ||
+      createdByName.includes(query) ||
+      createdByEmail.includes(query)
+    );
+  });
+
   if (loading) {
     return (
       <Layout>
@@ -156,7 +183,40 @@ export default function EventsPage() {
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-white">Pending Events</h1>
           <div className="text-[#9CA3AF] text-sm">
-            Total: <span className="text-white font-semibold">{events.length}</span>
+            Total: <span className="text-white font-semibold">{filteredEvents.length}</span>
+            {searchQuery && events.length !== filteredEvents.length && (
+              <span className="ml-2 text-[#9CA3AF]">
+                (of {events.length})
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Search Bar */}
+        <div className="mb-6">
+          <div className="relative max-w-md">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="w-5 h-5 text-[#9CA3AF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input
+              type="text"
+              placeholder="Search events..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-3 bg-[#2A2A2A] border border-[#374151] rounded-lg text-white placeholder-[#6B7280] focus:outline-none focus:ring-2 focus:ring-[#9333EA] focus:border-transparent"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#9CA3AF] hover:text-white"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
           </div>
         </div>
 
@@ -178,6 +238,14 @@ export default function EventsPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
             <p className="text-[#9CA3AF] text-lg">No pending events</p>
+          </div>
+        ) : filteredEvents.length === 0 ? (
+          <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl p-12 text-center">
+            <svg className="w-16 h-16 text-[#9CA3AF] mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <p className="text-[#9CA3AF] text-lg">No events found matching your search</p>
+            <p className="text-[#6B7280] text-sm mt-2">Try different keywords</p>
           </div>
         ) : (
           <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl overflow-hidden">
@@ -209,7 +277,7 @@ export default function EventsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#374151]">
-                  {events.map((event) => {
+                  {filteredEvents.map((event) => {
                     const eventId = getEventId(event);
                     return (
                     <tr key={eventId} className="hover:bg-[#2A2A2A] transition-colors">
