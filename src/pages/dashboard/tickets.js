@@ -1,75 +1,70 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import Layout from '../../components/Layout';
+import { adminAPI } from '../../lib/api/admin';
+import { getAccessToken } from '../../lib/api/client';
 
 export default function TicketsPage() {
-  // Static ticket data for now
-  const [tickets] = useState([
-    {
-      id: 'TKT-001',
-      eventName: 'Summer Music Festival',
-      customerName: 'John Doe',
-      customerEmail: 'john@example.com',
-      quantity: 2,
-      totalPrice: 100,
-      status: 'confirmed',
-      purchaseDate: '2024-01-15',
-    },
-    {
-      id: 'TKT-002',
-      eventName: 'Tech Conference 2024',
-      customerName: 'Jane Smith',
-      customerEmail: 'jane@example.com',
-      quantity: 1,
-      totalPrice: 75,
-      status: 'confirmed',
-      purchaseDate: '2024-01-14',
-    },
-    {
-      id: 'TKT-003',
-      eventName: 'Art Exhibition',
-      customerName: 'Bob Johnson',
-      customerEmail: 'bob@example.com',
-      quantity: 3,
-      totalPrice: 150,
-      status: 'pending',
-      purchaseDate: '2024-01-16',
-    },
-    {
-      id: 'TKT-004',
-      eventName: 'Food Festival',
-      customerName: 'Alice Brown',
-      customerEmail: 'alice@example.com',
-      quantity: 2,
-      totalPrice: 60,
-      status: 'cancelled',
-      purchaseDate: '2024-01-13',
-    },
-    {
-      id: 'TKT-005',
-      eventName: 'Jazz Night',
-      customerName: 'Charlie Wilson',
-      customerEmail: 'charlie@example.com',
-      quantity: 1,
-      totalPrice: 50,
-      status: 'confirmed',
-      purchaseDate: '2024-01-17',
-    },
-  ]);
+  const router = useRouter();
+  const [tickets, setTickets] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    const fetchTickets = async () => {
+      const accessToken = getAccessToken();
+      if (!accessToken) {
+        router.push('/login');
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await adminAPI.getTickets();
+        
+        // Handle different response structures
+        let ticketsData = [];
+        if (response.success && response.tickets) {
+          ticketsData = response.tickets;
+        } else if (response.tickets) {
+          ticketsData = response.tickets;
+        } else if (Array.isArray(response)) {
+          ticketsData = response;
+        } else if (response.data && Array.isArray(response.data)) {
+          ticketsData = response.data;
+        }
+        
+        setTickets(ticketsData);
+      } catch (error) {
+        console.error('Error fetching tickets:', error);
+        setError(error.message || 'Failed to fetch tickets');
+        // Set empty array so UI still works
+        setTickets([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTickets();
+  }, [router]);
 
   // Filter tickets based on search query
   const filteredTickets = tickets.filter((ticket) => {
     if (!searchQuery.trim()) return true;
     
     const query = searchQuery.toLowerCase();
-    const id = (ticket.id || '').toLowerCase();
-    const eventName = (ticket.eventName || '').toLowerCase();
-    const customerName = (ticket.customerName || '').toLowerCase();
-    const customerEmail = (ticket.customerEmail || '').toLowerCase();
-    const quantity = (ticket.quantity || '').toString().toLowerCase();
-    const totalPrice = (ticket.totalPrice || '').toString().toLowerCase();
+    // Map API response fields to searchable fields
+    const id = (ticket._id || ticket.id || '').toString().toLowerCase();
+    const eventName = (ticket.event?.title || ticket.eventName || '').toLowerCase();
+    const customerName = (ticket.user?.fullName || ticket.customerName || ticket.user?.name || '').toLowerCase();
+    const customerEmail = (ticket.user?.email || ticket.customerEmail || '').toLowerCase();
+    const quantity = (ticket.quantity || ticket.ticketQuantity || '').toString().toLowerCase();
+    const totalPrice = (ticket.totalPrice || ticket.price || ticket.amount || '').toString().toLowerCase();
     const status = (ticket.status || '').toLowerCase();
-    const purchaseDate = new Date(ticket.purchaseDate).toLocaleDateString().toLowerCase();
+    const purchaseDate = ticket.purchaseDate || ticket.createdAt || ticket.date;
+    const formattedDate = purchaseDate ? new Date(purchaseDate).toLocaleDateString().toLowerCase() : '';
     
     return (
       id.includes(query) ||
@@ -79,27 +74,51 @@ export default function TicketsPage() {
       quantity.includes(query) ||
       totalPrice.includes(query) ||
       status.includes(query) ||
-      purchaseDate.includes(query)
+      formattedDate.includes(query)
     );
   });
 
   const getStatusColor = (status) => {
-    switch (status) {
+    switch (status?.toLowerCase()) {
       case 'confirmed':
         return 'bg-green-500 bg-opacity-20 text-green-400';
       case 'pending':
         return 'bg-yellow-500 bg-opacity-20 text-yellow-400';
       case 'cancelled':
+      case 'canceled':
         return 'bg-red-500 bg-opacity-20 text-red-400';
       default:
         return 'bg-gray-500 bg-opacity-20 text-gray-400';
     }
   };
 
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-white text-lg">Loading tickets...</div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <p className="text-red-400 text-lg mb-2">Error loading tickets</p>
+            <p className="text-[#9CA3AF] text-sm whitespace-pre-line">{error}</p>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
-      <div className="p-8">
-        <div className="flex items-center justify-between mb-8">
+      <div className="h-full flex flex-col p-8 overflow-hidden">
+        <div className="flex items-center justify-between mb-8 flex-shrink-0">
           <h1 className="text-3xl font-bold text-white">Tickets</h1>
           <div className="text-[#9CA3AF] text-sm">
             Total: <span className="text-white font-semibold">{filteredTickets.length}</span>
@@ -112,7 +131,7 @@ export default function TicketsPage() {
         </div>
 
         {/* Search Bar */}
-        <div className="mb-6">
+        <div className="mb-6 flex-shrink-0">
           <div className="relative max-w-md">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <svg className="w-5 h-5 text-[#9CA3AF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -139,18 +158,19 @@ export default function TicketsPage() {
           </div>
         </div>
 
-        {filteredTickets.length === 0 ? (
-          <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl p-12 text-center">
-            <svg className="w-16 h-16 text-[#9CA3AF] mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <p className="text-[#9CA3AF] text-lg">No tickets found matching your search</p>
-            <p className="text-[#6B7280] text-sm mt-2">Try different keywords</p>
-          </div>
-        ) : (
-          <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
+        <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+          {filteredTickets.length === 0 ? (
+            <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl p-12 text-center">
+              <svg className="w-16 h-16 text-[#9CA3AF] mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <p className="text-[#9CA3AF] text-lg">No tickets found matching your search</p>
+              <p className="text-[#6B7280] text-sm mt-2">Try different keywords</p>
+            </div>
+          ) : (
+            <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl overflow-hidden flex-1 flex flex-col min-h-0">
+              <div className="overflow-y-auto overflow-x-auto flex-1 table-scroll">
+                <table className="w-full">
               <thead className="bg-[#2A2A2A]">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
@@ -180,43 +200,56 @@ export default function TicketsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#374151]">
-                {filteredTickets.map((ticket) => (
-                  <tr key={ticket.id} className="hover:bg-[#2A2A2A] transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-white">{ticket.id}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-white">{ticket.eventName}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-white">{ticket.customerName}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-[#9CA3AF]">{ticket.customerEmail}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-white">{ticket.quantity}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-white">${ticket.totalPrice}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 text-xs font-medium rounded ${getStatusColor(ticket.status)}`}>
-                        {ticket.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-[#9CA3AF]">
-                        {new Date(ticket.purchaseDate).toLocaleDateString()}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {filteredTickets.map((ticket) => {
+                  // Map API response to display fields
+                  const ticketId = ticket._id || ticket.id || 'N/A';
+                  const eventName = ticket.event?.title || ticket.eventName || 'N/A';
+                  const customerName = ticket.user?.fullName || ticket.customerName || ticket.user?.name || 'N/A';
+                  const customerEmail = ticket.user?.email || ticket.customerEmail || 'N/A';
+                  const quantity = ticket.quantity || ticket.ticketQuantity || 0;
+                  const totalPrice = ticket.totalPrice || ticket.price || ticket.amount || 0;
+                  const status = ticket.status || 'confirmed';
+                  const purchaseDate = ticket.purchaseDate || ticket.createdAt || ticket.date || new Date().toISOString();
+                  
+                  return (
+                    <tr key={ticketId} className="hover:bg-[#2A2A2A] transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-white">{ticketId}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-white">{eventName}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-white">{customerName}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-[#9CA3AF]">{customerEmail}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-white">{quantity}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-white">${totalPrice}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 py-1 text-xs font-medium rounded ${getStatusColor(status)}`}>
+                          {status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-[#9CA3AF]">
+                          {new Date(purchaseDate).toLocaleDateString()}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
-            </table>
-          </div>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
-        )}
       </div>
     </Layout>
   );
