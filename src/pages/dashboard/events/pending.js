@@ -262,8 +262,8 @@ export default function PendingEventsPage() {
 
   return (
     <Layout>
-      <div className="p-8">
-        <div className="flex items-center justify-between mb-8">
+      <div className="h-full flex flex-col p-8 overflow-hidden">
+        <div className="flex items-center justify-between mb-8 flex-shrink-0">
           <h1 className="text-3xl font-bold text-white">Pending Events</h1>
           <div className="text-[#9CA3AF] text-sm">
             Total: <span className="text-white font-semibold">{filteredEvents.length}</span>
@@ -276,7 +276,7 @@ export default function PendingEventsPage() {
         </div>
 
         {/* Search Bar */}
-        <div className="mb-6">
+        <div className="mb-6 flex-shrink-0">
           <div className="relative max-w-md">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <svg className="w-5 h-5 text-[#9CA3AF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -304,18 +304,19 @@ export default function PendingEventsPage() {
         </div>
 
         {success && (
-          <div className="mb-6 p-4 bg-green-500 bg-opacity-20 border border-green-500 rounded-lg text-green-400">
+          <div className="mb-6 p-4 bg-green-500 bg-opacity-20 border border-green-500 rounded-lg text-green-400 flex-shrink-0">
             {success}
           </div>
         )}
 
         {error && (
-          <div className="mb-6 p-4 bg-red-500 bg-opacity-20 border border-red-500 rounded-lg text-red-400">
+          <div className="mb-6 p-4 bg-red-500 bg-opacity-20 border border-red-500 rounded-lg text-red-400 flex-shrink-0">
             {error}
           </div>
         )}
 
-        {events.length === 0 ? (
+        <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+          {events.length === 0 ? (
           <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl p-12 text-center">
             <svg className="w-16 h-16 text-[#9CA3AF] mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -330,10 +331,10 @@ export default function PendingEventsPage() {
             <p className="text-[#9CA3AF] text-lg">No events found matching your search</p>
             <p className="text-[#6B7280] text-sm mt-2">Try different keywords</p>
           </div>
-        ) : (
-          <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl overflow-hidden">
-            <div className="overflow-x-auto table-scroll">
-              <table className="w-full">
+          ) : (
+            <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl overflow-hidden flex-1 flex flex-col min-h-0">
+              <div className="overflow-y-auto overflow-x-auto flex-1 table-scroll">
+                <table className="w-full">
                 <thead className="bg-[#2A2A2A]">
                   <tr>
                     <th className="px-6 py-4 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
@@ -418,10 +419,11 @@ export default function PendingEventsPage() {
                     </tr>
                   )})}
                 </tbody>
-              </table>
+                </table>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Approve Confirmation Modal */}
         {showConfirmModal && selectedEvent && (
