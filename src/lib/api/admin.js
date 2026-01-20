@@ -212,5 +212,21 @@ export const adminAPI = {
       throw error;
     }
   },
+
+  // Delete Ticket (Admin only)
+  deleteTicket: async (id) => {
+    try {
+      const response = await apiClient.delete(`/admin/tickets/${id}`);
+      return response.data;
+    } catch (error) {
+      if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+        throw new Error(
+          `Cannot connect to backend server at ${API_BASE_URL}. ` +
+          `Please make sure the backend server is running and NEXT_PUBLIC_API_BASE_URL is set correctly in your .env.local file.`
+        );
+      }
+      throw error;
+    }
+  },
 };
 

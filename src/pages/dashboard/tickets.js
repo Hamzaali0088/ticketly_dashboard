@@ -53,6 +53,9 @@ export default function TicketsPage() {
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [screenshotModalOpen, setScreenshotModalOpen] = useState(false);
   const [selectedScreenshotUrl, setSelectedScreenshotUrl] = useState(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [ticketToDelete, setTicketToDelete] = useState(null);
+  const [deletingTicket, setDeletingTicket] = useState(false);
 
   useEffect(() => {
     const fetchTickets = async () => {
@@ -226,6 +229,40 @@ export default function TicketsPage() {
     }
   };
 
+  const handleDeleteTicket = async () => {
+    if (!ticketToDelete) return;
+
+    const ticketId = getTicketId(ticketToDelete);
+    if (!ticketId || ticketId === 'N/A') {
+      setError('Ticket ID not found. Cannot delete ticket.');
+      setDeleteModalOpen(false);
+      return;
+    }
+
+    try {
+      setDeletingTicket(true);
+      setError(null);
+      const response = await adminAPI.deleteTicket(ticketId);
+      if (response.success) {
+        // Remove ticket from list
+        setTickets((prev) => prev.filter((t) => getTicketId(t) !== ticketId));
+        setDeleteModalOpen(false);
+        setTicketToDelete(null);
+      } else {
+        setError(response.message || 'Failed to delete ticket');
+      }
+    } catch (err) {
+      console.error('Error deleting ticket:', err);
+      const message =
+        err.message ||
+        err.response?.data?.message ||
+        'Failed to delete ticket';
+      setError(message);
+    } finally {
+      setDeletingTicket(false);
+    }
+  };
+
   return (
     <Layout>
       <div className="h-full flex flex-col p-8 overflow-hidden">
@@ -290,10 +327,11 @@ export default function TicketsPage() {
                 'Status',
                 'Payment Screenshot',
                 'Purchase Date',
+                'Actions',
               ]}
             >
               {loading ? (
-                <TableSkeleton columns={9} />
+                <TableSkeleton columns={10} />
               ) : (
                 filteredTickets.map((ticket) => {
                   // Map API response to display fields
@@ -358,6 +396,21 @@ export default function TicketsPage() {
                         <div className="text-sm text-[#9CA3AF]">
                           {new Date(purchaseDate).toLocaleDateString()}
                         </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTicketToDelete(ticket);
+                            setDeleteModalOpen(true);
+                          }}
+                          className="text-[#EF4444] hover:text-[#DC2626] transition-colors focus:outline-none focus:ring-2 focus:ring-[#EF4444] rounded p-1"
+                          title="Delete Ticket"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
                       </td>
                     </tr>
                   );
@@ -494,6 +547,72 @@ export default function TicketsPage() {
                   className="px-6 py-3 bg-[#9333EA] text-white rounded-lg hover:bg-[#7C3AED] transition-colors font-medium"
                 >
                   Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Ticket Confirmation Modal */}
+        {deleteModalOpen && ticketToDelete && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl p-8 w-full max-w-md">
+              <div className="mb-6 text-center">
+                <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-500 bg-opacity-20 mb-4">
+                  <svg className="h-6 w-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-3">Delete Ticket</h2>
+                <p className="text-[#9CA3AF] text-sm mb-2">
+                  Are you sure you want to delete this ticket?
+                </p>
+                <p className="text-[#9CA3AF] text-sm">
+                  Ticket ID: <span className="text-white font-mono">{getTicketId(ticketToDelete)}</span>
+                </p>
+                {ticketToDelete.event?.title && (
+                  <p className="text-[#9CA3AF] text-sm mt-2">
+                    Event: <span className="text-white">{ticketToDelete.event.title}</span>
+                  </p>
+                )}
+                {ticketToDelete.user?.fullName && (
+                  <p className="text-[#9CA3AF] text-sm mt-1">
+                    Customer: <span className="text-white">{ticketToDelete.user.fullName}</span>
+                  </p>
+                )}
+                <p className="text-red-400 text-sm mt-4 font-semibold">
+                  This action cannot be undone. All related payment records and screenshots will also be deleted.
+                </p>
+              </div>
+
+              {error && (
+                <div className="mb-4 p-3 bg-red-500 bg-opacity-20 border border-red-500 rounded-lg">
+                  <p className="text-red-400 text-sm">{error}</p>
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!deletingTicket) {
+                      setDeleteModalOpen(false);
+                      setTicketToDelete(null);
+                      setError(null);
+                    }
+                  }}
+                  className="flex-1 px-6 py-3 bg-[#2A2A2A] border border-[#374151] text-white rounded-lg hover:bg-[#374151] transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                  disabled={deletingTicket}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteTicket}
+                  className="flex-1 px-6 py-3 bg-[#EF4444] text-white rounded-lg hover:bg-[#DC2626] transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                  disabled={deletingTicket}
+                >
+                  {deletingTicket ? 'Deleting...' : 'Delete Ticket'}
                 </button>
               </div>
             </div>
