@@ -5,6 +5,41 @@ import DataTable from '../../components/DataTable';
 import TableSkeleton from '../../components/TableSkeleton';
 import { adminAPI } from '../../lib/api/admin';
 import { getAccessToken } from '../../lib/api/client';
+import { API_BASE_URL } from '../../lib/config';
+
+// Helper function to fix image URLs (replace localhost with current backend URL)
+const fixImageUrl = (url) => {
+  if (!url) return null;
+  
+  // If URL contains localhost, replace it with the current API base URL
+  if (url.includes('localhost') || url.includes('127.0.0.1')) {
+    // Extract the path from the URL
+    try {
+      const urlObj = new URL(url);
+      const path = urlObj.pathname;
+      // Remove /api from API_BASE_URL if present, then add the path
+      const baseUrl = API_BASE_URL.replace('/api', '');
+      return `${baseUrl}${path}`;
+    } catch (e) {
+      // If URL parsing fails, try to find /uploads in the string
+      const uploadsIndex = url.indexOf('/uploads');
+      if (uploadsIndex !== -1) {
+        const path = url.substring(uploadsIndex);
+        const baseUrl = API_BASE_URL.replace('/api', '');
+        return `${baseUrl}${path}`;
+      }
+    }
+  }
+  
+  // If it's already a full URL, return as is
+  if (url.startsWith('http')) {
+    return url;
+  }
+  
+  // If it's a relative path, construct full URL
+  const baseUrl = API_BASE_URL.replace('/api', '');
+  return `${baseUrl}${url}`;
+};
 
 export default function TicketsPage() {
   const router = useRouter();
@@ -16,6 +51,8 @@ export default function TicketsPage() {
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [selectedStatus, setSelectedStatus] = useState('');
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [screenshotModalOpen, setScreenshotModalOpen] = useState(false);
+  const [selectedScreenshotUrl, setSelectedScreenshotUrl] = useState(null);
 
   useEffect(() => {
     const fetchTickets = async () => {
@@ -84,6 +121,27 @@ export default function TicketsPage() {
     );
   });
 
+  const getStatusLabel = (status) => {
+    const normalized = (status || '').toLowerCase();
+    switch (normalized) {
+      case 'pending_payment':
+        return 'pending';
+      case 'payment_in_review':
+        return 'in_review';
+      case 'confirmed':
+        return 'submitted';
+      case 'used':
+        return 'used';
+      case 'cancelled':
+      case 'canceled':
+        return 'cancelled';
+      case 'expired':
+        return 'expired';
+      default:
+        return status || 'unknown';
+    }
+  };
+
   const getStatusColor = (status) => {
     const normalized = (status || '').toLowerCase();
     switch (normalized) {
@@ -92,7 +150,7 @@ export default function TicketsPage() {
       case 'pending':
       case 'pending_payment':
         return 'bg-yellow-500 bg-opacity-20 text-yellow-400';
-      case 'payment_submitted':
+      case 'payment_in_review':
         return 'bg-blue-500 bg-opacity-20 text-blue-400';
       case 'used':
         return 'bg-gray-500 bg-opacity-20 text-gray-300';
@@ -230,11 +288,12 @@ export default function TicketsPage() {
                 'Quantity',
                 'Total Price',
                 'Status',
+                'Payment Screenshot',
                 'Purchase Date',
               ]}
             >
               {loading ? (
-                <TableSkeleton columns={8} />
+                <TableSkeleton columns={9} />
               ) : (
                 filteredTickets.map((ticket) => {
                   // Map API response to display fields
@@ -244,7 +303,8 @@ export default function TicketsPage() {
                   const customerEmail = ticket.user?.email || ticket.customerEmail || 'N/A';
                   const quantity = ticket.quantity || ticket.ticketQuantity || 0;
                   const totalPrice = ticket.totalPrice || ticket.price || ticket.amount || 0;
-                  const status = ticket.status || 'confirmed';
+                  const rawStatus = ticket.status || 'confirmed';
+                  const status = getStatusLabel(rawStatus);
                   const purchaseDate = ticket.purchaseDate || ticket.createdAt || ticket.date || new Date().toISOString();
                   
                   return (
@@ -271,10 +331,28 @@ export default function TicketsPage() {
                         <button
                           type="button"
                           onClick={() => handleStatusClick(ticket)}
-                          className={`px-2 py-1 text-xs font-medium rounded ${getStatusColor(status)} focus:outline-none focus:ring-2 focus:ring-[#9333EA]`}
+                          className={`px-2 py-1 text-xs font-medium rounded ${getStatusColor(rawStatus)} focus:outline-none focus:ring-2 focus:ring-[#9333EA]`}
                         >
                           {status}
                         </button>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {ticket.paymentScreenshotUrl ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              // Fix the URL before opening modal
+                              const fixedUrl = fixImageUrl(ticket.paymentScreenshotUrl);
+                              setSelectedScreenshotUrl(fixedUrl);
+                              setScreenshotModalOpen(true);
+                            }}
+                            className="text-[#9333EA] hover:text-[#7C3AED] text-sm font-medium underline focus:outline-none focus:ring-2 focus:ring-[#9333EA] rounded"
+                          >
+                            View Screenshot
+                          </button>
+                        ) : (
+                          <span className="text-sm text-[#6B7280]">N/A</span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-[#9CA3AF]">
@@ -312,11 +390,11 @@ export default function TicketsPage() {
                   onChange={(e) => setSelectedStatus(e.target.value)}
                   className="w-full bg-[#111827] border border-[#374151] text-[#D1D5DB] text-sm px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9333EA]"
                 >
-                  <option value="pending_payment">Pending Payment</option>
-                  <option value="payment_submitted">Payment In Review</option>
-                  <option value="confirmed">Confirmed</option>
-                  <option value="used">Used</option>
-                  <option value="cancelled">Cancelled</option>
+                  <option value="pending_payment">pending</option>
+                  <option value="payment_in_review">in_review</option>
+                  <option value="confirmed">submitted</option>
+                  <option value="used">used</option>
+                  <option value="cancelled">cancelled</option>
                 </select>
               </div>
 
@@ -341,6 +419,81 @@ export default function TicketsPage() {
                   disabled={updatingStatus}
                 >
                   {updatingStatus ? 'Updating...' : 'Update Status'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Screenshot View Modal */}
+        {screenshotModalOpen && selectedScreenshotUrl && (
+          <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50" onClick={() => setScreenshotModalOpen(false)}>
+            <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl p-6 w-full max-w-4xl max-h-[90vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-white">Payment Screenshot</h2>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setScreenshotModalOpen(false);
+                    setSelectedScreenshotUrl(null);
+                  }}
+                  className="text-[#9CA3AF] hover:text-white transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <div className="flex justify-center items-center bg-[#0F0F0F] rounded-lg p-4 min-h-[400px]">
+                {selectedScreenshotUrl ? (
+                  <>
+                    <img
+                      key={selectedScreenshotUrl}
+                      src={selectedScreenshotUrl}
+                      alt="Payment Screenshot"
+                      className="max-w-full max-h-[70vh] object-contain rounded-lg"
+                      crossOrigin="anonymous"
+                      onError={(e) => {
+                        console.error('Failed to load image:', selectedScreenshotUrl);
+                        e.target.style.display = 'none';
+                        const errorDiv = e.target.parentElement.querySelector('.error-message');
+                        if (errorDiv) errorDiv.style.display = 'block';
+                      }}
+                    />
+                    <div className="hidden error-message text-center">
+                      <svg className="w-16 h-16 text-[#9CA3AF] mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <p className="text-[#9CA3AF] text-lg mb-2">Failed to load image</p>
+                      <p className="text-[#6B7280] text-sm mb-2">URL: {selectedScreenshotUrl}</p>
+                      <a
+                        href={selectedScreenshotUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#9333EA] hover:text-[#7C3AED] text-sm mt-2 inline-block underline"
+                      >
+                        Try opening in new tab
+                      </a>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center">
+                    <p className="text-[#9CA3AF] text-lg">No screenshot URL available</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-4 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setScreenshotModalOpen(false);
+                    setSelectedScreenshotUrl(null);
+                  }}
+                  className="px-6 py-3 bg-[#9333EA] text-white rounded-lg hover:bg-[#7C3AED] transition-colors font-medium"
+                >
+                  Close
                 </button>
               </div>
             </div>
