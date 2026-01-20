@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '../../components/Layout';
+import DataTable from '../../components/DataTable';
+import TableSkeleton from '../../components/TableSkeleton';
 import { authAPI } from '../../lib/api/auth';
 import { getAccessToken } from '../../lib/api/client';
 
@@ -199,16 +201,6 @@ export default function UsersPage() {
     );
   });
 
-  if (loading) {
-    return (
-      <Layout>
-        <div className="flex items-center justify-center h-screen">
-          <div className="text-white text-lg">Loading...</div>
-        </div>
-      </Layout>
-    );
-  }
-
   return (
     <Layout>
       <div className="p-8">
@@ -258,14 +250,14 @@ export default function UsersPage() {
           </div>
         </div>
 
-        {users.length === 0 ? (
+        { !loading && users.length === 0 ? (
           <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl p-12 text-center">
             <svg className="w-16 h-16 text-[#9CA3AF] mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
             </svg>
             <p className="text-[#9CA3AF] text-lg">No users found</p>
           </div>
-        ) : filteredUsers.length === 0 ? (
+        ) : !loading && filteredUsers.length === 0 ? (
           <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl p-12 text-center">
             <svg className="w-16 h-16 text-[#9CA3AF] mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -274,39 +266,21 @@ export default function UsersPage() {
             <p className="text-[#6B7280] text-sm mt-2">Try different keywords</p>
           </div>
         ) : (
-          <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-[#2A2A2A]">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                      Full Name
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                      Email
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                      Username
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                      Role
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                      Auth Provider
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                      Verified
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                      Created At
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#374151]">
-                  {filteredUsers.map((user) => (
+          <DataTable
+            columns={[
+              'Full Name',
+              'Email',
+              'Username',
+              'Role',
+              'Auth Provider',
+              'Verified',
+              'Created At',
+              'Actions',
+            ]}
+          >
+            {loading ? (
+              <TableSkeleton columns={8} />
+            ) : filteredUsers.map((user) => (
                     <tr key={user.id || user._id} className="hover:bg-[#2A2A2A] transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-white">
@@ -378,10 +352,7 @@ export default function UsersPage() {
                       </td>
                     </tr>
                   ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          </DataTable>
         )}
 
         {/* Edit Modal */}

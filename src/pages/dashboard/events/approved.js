@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '../../../components/Layout';
+import DataTable from '../../../components/DataTable';
+import TableSkeleton from '../../../components/TableSkeleton';
 import { adminAPI } from '../../../lib/api/admin';
 import { getAccessToken } from '../../../lib/api/client';
 
@@ -192,16 +194,6 @@ export default function ApprovedEventsPage() {
     );
   });
 
-  if (loading) {
-    return (
-      <Layout>
-        <div className="flex items-center justify-center h-screen">
-          <div className="text-white text-lg">Loading...</div>
-        </div>
-      </Layout>
-    );
-  }
-
   return (
     <Layout>
       <div className="h-full flex flex-col p-8 overflow-hidden">
@@ -258,14 +250,14 @@ export default function ApprovedEventsPage() {
         )}
 
         <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
-          {events.length === 0 ? (
+          {!loading && events.length === 0 ? (
           <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl p-12 text-center">
             <svg className="w-16 h-16 text-[#9CA3AF] mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <p className="text-[#9CA3AF] text-lg">No approved events</p>
           </div>
-        ) : filteredEvents.length === 0 ? (
+        ) : !loading && filteredEvents.length === 0 ? (
           <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl p-12 text-center">
             <svg className="w-16 h-16 text-[#9CA3AF] mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -273,89 +265,73 @@ export default function ApprovedEventsPage() {
             <p className="text-[#9CA3AF] text-lg">No events found matching your search</p>
             <p className="text-[#6B7280] text-sm mt-2">Try different keywords</p>
           </div>
-          ) : (
-            <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl overflow-hidden flex-1 flex flex-col min-h-0">
-              <div className="overflow-y-auto overflow-x-auto flex-1 table-scroll">
-                <table className="w-full">
-                <thead className="bg-[#2A2A2A]">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                      Title
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                      Description
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                      Date & Time
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                      Location
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                      Ticket Price
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                      Created By
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                      Actions
-                    </th>
+        ) : (
+          <DataTable
+            columns={[
+              'Title',
+              'Description',
+              'Date & Time',
+              'Location',
+              'Ticket Price',
+              'Created By',
+              'Actions',
+            ]}
+          >
+            {loading ? (
+              <TableSkeleton columns={7} />
+            ) : (
+              filteredEvents.map((event) => {
+                const eventId = getEventId(event);
+                return (
+                  <tr key={eventId} className="hover:bg-[#2A2A2A] transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-white">{event.title}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-[#9CA3AF] max-w-xs truncate">
+                        {event.description}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-white">
+                        {new Date(event.date).toLocaleDateString()}
+                      </div>
+                      <div className="text-xs text-[#9CA3AF]">{event.time}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-[#9CA3AF] max-w-xs truncate">
+                        {event.location}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-white">${event.ticketPrice}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-white">
+                        {event.createdBy?.fullName || event.createdBy?.email || 'Unknown'}
+                      </div>
+                      <div className="text-xs text-[#9CA3AF]">
+                        {event.createdBy?.email}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <button
+                        onClick={() => handleDeleteClick(event)}
+                        disabled={deletingId === eventId || !eventId}
+                        className="p-2 bg-red-500 bg-opacity-20 text-red-400 rounded-lg hover:bg-opacity-30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Delete Event"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-[#374151]">
-                  {filteredEvents.map((event) => {
-                    const eventId = getEventId(event);
-                    return (
-                    <tr key={eventId} className="hover:bg-[#2A2A2A] transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-white">{event.title}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-[#9CA3AF] max-w-xs truncate">
-                          {event.description}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-white">
-                          {new Date(event.date).toLocaleDateString()}
-                        </div>
-                        <div className="text-xs text-[#9CA3AF]">{event.time}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-[#9CA3AF] max-w-xs truncate">
-                          {event.location}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-white">${event.ticketPrice}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-white">
-                          {event.createdBy?.fullName || event.createdBy?.email || 'Unknown'}
-                        </div>
-                        <div className="text-xs text-[#9CA3AF]">
-                          {event.createdBy?.email}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <button
-                          onClick={() => handleDeleteClick(event)}
-                          disabled={deletingId === eventId || !eventId}
-                          className="p-2 bg-red-500 bg-opacity-20 text-red-400 rounded-lg hover:bg-opacity-30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                          title="Delete Event"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </td>
-                    </tr>
-                  )})}
-                </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+                );
+              })
+            )}
+          </DataTable>
+        )}
         </div>
 
         {/* Delete Confirmation Modal */}

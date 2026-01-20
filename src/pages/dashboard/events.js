@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '../../components/Layout';
+import DataTable from '../../components/DataTable';
+import TableSkeleton from '../../components/TableSkeleton';
 import { adminAPI } from '../../lib/api/admin';
 import { getAccessToken } from '../../lib/api/client';
 
@@ -167,16 +169,6 @@ export default function EventsPage() {
     );
   });
 
-  if (loading) {
-    return (
-      <Layout>
-        <div className="flex items-center justify-center h-screen">
-          <div className="text-white text-lg">Loading...</div>
-        </div>
-      </Layout>
-    );
-  }
-
   return (
     <Layout>
       <div className="h-full flex flex-col p-8 overflow-hidden">
@@ -233,14 +225,14 @@ export default function EventsPage() {
         )}
 
         <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
-          {events.length === 0 ? (
+          {!loading && events.length === 0 ? (
           <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl p-12 text-center">
             <svg className="w-16 h-16 text-[#9CA3AF] mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
             <p className="text-[#9CA3AF] text-lg">No pending events</p>
           </div>
-        ) : filteredEvents.length === 0 ? (
+        ) : !loading && filteredEvents.length === 0 ? (
           <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl p-12 text-center">
             <svg className="w-16 h-16 text-[#9CA3AF] mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -249,36 +241,20 @@ export default function EventsPage() {
             <p className="text-[#6B7280] text-sm mt-2">Try different keywords</p>
           </div>
           ) : (
-            <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl overflow-hidden flex-1 flex flex-col min-h-0">
-              <div className="overflow-y-auto overflow-x-auto flex-1 table-scroll">
-                <table className="w-full">
-                <thead className="bg-[#2A2A2A]">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                      Title
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                      Description
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                      Date & Time
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                      Location
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                      Ticket Price
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                      Created By
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#374151]">
-                  {filteredEvents.map((event) => {
+            <DataTable
+              columns={[
+                'Title',
+                'Description',
+                'Date & Time',
+                'Location',
+                'Ticket Price',
+                'Created By',
+                'Actions',
+              ]}
+            >
+              {loading ? (
+                <TableSkeleton columns={7} />
+              ) : filteredEvents.map((event) => {
                     const eventId = getEventId(event);
                     return (
                     <tr key={eventId} className="hover:bg-[#2A2A2A] transition-colors">
@@ -323,10 +299,7 @@ export default function EventsPage() {
                       </td>
                     </tr>
                   )})}
-                </tbody>
-                </table>
-              </div>
-            </div>
+            </DataTable>
           )}
         </div>
 

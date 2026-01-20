@@ -49,16 +49,6 @@ export default function DashboardPage() {
     checkAuthAndFetchStats();
   }, [router]);
 
-  if (loading) {
-    return (
-      <Layout>
-        <div className="flex items-center justify-center h-screen">
-          <div className="text-white text-lg">Loading...</div>
-        </div>
-      </Layout>
-    );
-  }
-
   return (
     <Layout>
       <div className="p-8">

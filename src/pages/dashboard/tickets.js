@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '../../components/Layout';
+import DataTable from '../../components/DataTable';
+import TableSkeleton from '../../components/TableSkeleton';
 import { adminAPI } from '../../lib/api/admin';
 import { getAccessToken } from '../../lib/api/client';
 
@@ -92,16 +94,6 @@ export default function TicketsPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <Layout>
-        <div className="flex items-center justify-center h-screen">
-          <div className="text-white text-lg">Loading tickets...</div>
-        </div>
-      </Layout>
-    );
-  }
-
   if (error) {
     return (
       <Layout>
@@ -159,7 +151,7 @@ export default function TicketsPage() {
         </div>
 
         <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
-          {filteredTickets.length === 0 ? (
+          {!loading && filteredTickets.length === 0 ? (
             <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl p-12 text-center">
               <svg className="w-16 h-16 text-[#9CA3AF] mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -168,39 +160,22 @@ export default function TicketsPage() {
               <p className="text-[#6B7280] text-sm mt-2">Try different keywords</p>
             </div>
           ) : (
-            <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl overflow-hidden flex-1 flex flex-col min-h-0">
-              <div className="overflow-y-auto overflow-x-auto flex-1 table-scroll">
-                <table className="w-full">
-              <thead className="bg-[#2A2A2A]">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                    Ticket ID
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                    Event Name
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                    Customer Name
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                    Customer Email
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                    Quantity
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                    Total Price
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
-                    Purchase Date
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#374151]">
-                {filteredTickets.map((ticket) => {
+            <DataTable
+              columns={[
+                'Ticket ID',
+                'Event Name',
+                'Customer Name',
+                'Customer Email',
+                'Quantity',
+                'Total Price',
+                'Status',
+                'Purchase Date',
+              ]}
+            >
+              {loading ? (
+                <TableSkeleton columns={8} />
+              ) : (
+                filteredTickets.map((ticket) => {
                   // Map API response to display fields
                   const ticketId = ticket._id || ticket.id || 'N/A';
                   const eventName = ticket.event?.title || ticket.eventName || 'N/A';
@@ -243,11 +218,9 @@ export default function TicketsPage() {
                       </td>
                     </tr>
                   );
-                })}
-              </tbody>
-                </table>
-              </div>
-            </div>
+                })
+              )}
+            </DataTable>
           )}
         </div>
       </div>
