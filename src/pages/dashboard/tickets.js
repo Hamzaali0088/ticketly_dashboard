@@ -149,7 +149,7 @@ export default function TicketsPage() {
           </div>
         ) : (
           <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl overflow-hidden">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto table-scroll">
             <table className="w-full">
               <thead className="bg-[#2A2A2A]">
                 <tr>

@@ -8,6 +8,7 @@ export default function Layout({ children }) {
   const router = useRouter();
   const [user, setUser] = useState(null);
   const [usersMenuOpen, setUsersMenuOpen] = useState(false);
+  const [eventsMenuOpen, setEventsMenuOpen] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -35,6 +36,12 @@ export default function Layout({ children }) {
     return router.pathname === path;
   };
 
+  const isEventsActive = () => {
+    return router.pathname === '/dashboard/events' || 
+           router.pathname === '/dashboard/events/pending' || 
+           router.pathname === '/dashboard/events/approved';
+  };
+
   return (
     <div className="min-h-screen bg-[#0F0F0F] flex">
       {/* Left Sidebar */}
@@ -59,19 +66,59 @@ export default function Layout({ children }) {
             Dashboard
           </Link>
 
-          <Link
-            href="/dashboard/events"
-            className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
-              isActive('/dashboard/events')
-                ? 'bg-[#9333EA] text-white'
-                : 'text-[#9CA3AF] hover:bg-[#2A2A2A] hover:text-white'
-            }`}
-          >
-            <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            Events
-          </Link>
+          {/* Events Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setEventsMenuOpen(!eventsMenuOpen)}
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-colors ${
+                isEventsActive()
+                  ? 'bg-[#9333EA] text-white'
+                  : 'text-[#9CA3AF] hover:bg-[#2A2A2A] hover:text-white'
+              }`}
+            >
+              <div className="flex items-center">
+                <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Events
+              </div>
+              <svg
+                className={`w-4 h-4 transition-transform ${eventsMenuOpen ? 'rotate-180' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {eventsMenuOpen && (
+              <div className="mt-2 ml-4 space-y-1">
+                <Link
+                  href="/dashboard/events/pending"
+                  onClick={() => setEventsMenuOpen(false)}
+                  className={`block px-4 py-2 rounded-lg transition-colors ${
+                    isActive('/dashboard/events/pending')
+                      ? 'bg-[#9333EA] text-white'
+                      : 'text-[#9CA3AF] hover:bg-[#2A2A2A] hover:text-white'
+                  }`}
+                >
+                  Pending
+                </Link>
+                <Link
+                  href="/dashboard/events/approved"
+                  onClick={() => setEventsMenuOpen(false)}
+                  className={`block px-4 py-2 rounded-lg transition-colors ${
+                    isActive('/dashboard/events/approved')
+                      ? 'bg-[#9333EA] text-white'
+                      : 'text-[#9CA3AF] hover:bg-[#2A2A2A] hover:text-white'
+                  }`}
+                >
+                  Approved
+                </Link>
+              </div>
+            )}
+          </div>
 
           <Link
             href="/dashboard/tickets"
@@ -157,7 +204,7 @@ export default function Layout({ children }) {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-hidden flex flex-col h-screen">
         {children}
       </main>
     </div>

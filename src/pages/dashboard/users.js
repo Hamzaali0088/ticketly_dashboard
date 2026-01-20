@@ -211,8 +211,8 @@ export default function UsersPage() {
 
   return (
     <Layout>
-      <div className="p-8">
-        <div className="flex items-center justify-between mb-8">
+      <div className="h-full flex flex-col p-8 overflow-hidden">
+        <div className="flex items-center justify-between mb-8 flex-shrink-0">
           <h1 className="text-3xl font-bold text-white">All Users</h1>
           <div className="text-[#9CA3AF] text-sm">
             Total: <span className="text-white font-semibold">{filteredUsers.length}</span>
@@ -225,13 +225,13 @@ export default function UsersPage() {
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-500 bg-opacity-20 border border-red-500 rounded-lg text-red-400">
+          <div className="mb-6 p-4 bg-red-500 bg-opacity-20 border border-red-500 rounded-lg text-red-400 flex-shrink-0">
             {error}
           </div>
         )}
 
         {/* Search Bar */}
-        <div className="mb-6">
+        <div className="mb-6 flex-shrink-0">
           <div className="relative max-w-md">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <svg className="w-5 h-5 text-[#9CA3AF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -258,25 +258,26 @@ export default function UsersPage() {
           </div>
         </div>
 
-        {users.length === 0 ? (
-          <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl p-12 text-center">
-            <svg className="w-16 h-16 text-[#9CA3AF] mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-            <p className="text-[#9CA3AF] text-lg">No users found</p>
-          </div>
-        ) : filteredUsers.length === 0 ? (
-          <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl p-12 text-center">
-            <svg className="w-16 h-16 text-[#9CA3AF] mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <p className="text-[#9CA3AF] text-lg">No users found matching your search</p>
-            <p className="text-[#6B7280] text-sm mt-2">Try different keywords</p>
-          </div>
-        ) : (
-          <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
+        <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+          {users.length === 0 ? (
+            <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl p-12 text-center">
+              <svg className="w-16 h-16 text-[#9CA3AF] mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+              <p className="text-[#9CA3AF] text-lg">No users found</p>
+            </div>
+          ) : filteredUsers.length === 0 ? (
+            <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl p-12 text-center">
+              <svg className="w-16 h-16 text-[#9CA3AF] mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <p className="text-[#9CA3AF] text-lg">No users found matching your search</p>
+              <p className="text-[#6B7280] text-sm mt-2">Try different keywords</p>
+            </div>
+          ) : (
+            <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl overflow-hidden flex-1 flex flex-col min-h-0">
+              <div className="overflow-y-auto overflow-x-auto flex-1 table-scroll">
+                <table className="w-full">
                 <thead className="bg-[#2A2A2A]">
                   <tr>
                     <th className="px-6 py-4 text-left text-xs font-medium text-[#9CA3AF] uppercase tracking-wider">
@@ -379,10 +380,11 @@ export default function UsersPage() {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+                </table>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Edit Modal */}
         {editModalOpen && (
