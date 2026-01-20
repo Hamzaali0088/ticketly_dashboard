@@ -12,6 +12,7 @@ export default function Layout({ children }) {
   const [touchEnd, setTouchEnd] = useState(null);
   const [eventsMenuOpen, setEventsMenuOpen] = useState(false);
   const [usersMenuOpen, setUsersMenuOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -330,7 +331,8 @@ export default function Layout({ children }) {
             </div>
           )}
           <button
-            onClick={handleLogout}
+            type="button"
+            onClick={() => setShowLogoutConfirm(true)}
             className="w-full flex items-center justify-center px-4 py-2 bg-[#2A2A2A] text-white rounded-lg hover:bg-[#374151] transition-colors"
           >
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -345,6 +347,48 @@ export default function Layout({ children }) {
       <main className="flex-1 overflow-auto">
         {children}
       </main>
+
+      {/* Logout confirmation modal (reusing delete/update modal design) */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-[#1F1F1F] border border-[#374151] rounded-xl p-8 w-full max-w-md">
+            <div className="flex items-center justify-center mb-6">
+              <div className="w-16 h-16 bg-red-500 bg-opacity-20 rounded-full flex items-center justify-center">
+                <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+              </div>
+            </div>
+
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-white mb-3">Logout?</h2>
+              <p className="text-[#9CA3AF] text-lg">
+                Are you sure you want to logout from your account?
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 px-6 py-3 bg-[#2A2A2A] border border-[#374151] text-white rounded-lg hover:bg-[#374151] transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowLogoutConfirm(false);
+                  handleLogout();
+                }}
+                className="flex-1 px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

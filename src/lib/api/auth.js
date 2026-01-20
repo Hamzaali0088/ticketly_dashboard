@@ -20,7 +20,18 @@ export const authAPI = {
       const response = await apiClient.post('/auth/login', data);
       return response.data;
     } catch (error) {
-      // Enhanced error handling for network errors
+      // --- Centralised, robust error handling for login ---
+      //
+      // We want three behaviours:
+      // 1. Network errors → throw a clear, human‑readable Error explaining
+      //    how to fix the backend / env configuration.
+      // 2. Backend "business" errors (e.g. invalid credentials, 404 with
+      //    `{ success: false, message: "Email not found..." }`) → do NOT
+      //    throw. Instead, return the backend payload so the UI can display
+      //    the message without crashing or showing the Next.js error overlay.
+      // 3. Anything truly unexpected → rethrow so it can be logged and fixed.
+
+      // 1) Network / connectivity issues
       if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
         console.error('❌ Network Error Details:', {
           code: error.code,
@@ -34,6 +45,22 @@ export const authAPI = {
           `If you just updated .env.local, please restart the Next.js dev server.`
         );
       }
+
+      // 2) Backend returned a response with an error status (4xx / 5xx)
+      if (error.response && error.response.data) {
+        const data = error.response.data;
+        return {
+          success: data.success ?? false,
+          message:
+            data.message ||
+            data.error ||
+            'Login failed. Please check your credentials and try again.',
+          // Preserve any additional fields the backend might send
+          ...data,
+        };
+      }
+
+      // 3) Fallback – let the caller handle truly unexpected errors
       throw error;
     }
   },
