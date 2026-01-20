@@ -10,7 +10,7 @@ export default function Layout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
-  const [eventsMenuOpen, setEventsMenuOpen] = useState(false);
+  const [isEventsMenuOpen, setIsEventsMenuOpen] = useState(false);
   const [usersMenuOpen, setUsersMenuOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
@@ -38,7 +38,7 @@ export default function Layout({ children }) {
       const savedUsersMenuOpen = localStorage.getItem('usersMenuOpen') === 'true';
       
       if (savedEventsMenuOpen) {
-        setEventsMenuOpen(true);
+        setIsEventsMenuOpen(true);
       }
       if (savedUsersMenuOpen) {
         setUsersMenuOpen(true);
@@ -49,9 +49,9 @@ export default function Layout({ children }) {
   // Persist dropdown state to localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('eventsMenuOpen', eventsMenuOpen.toString());
+      localStorage.setItem('eventsMenuOpen', isEventsMenuOpen.toString());
     }
-  }, [eventsMenuOpen]);
+  }, [isEventsMenuOpen]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -182,7 +182,7 @@ export default function Layout({ children }) {
               data-dropdown-button="events"
               onClick={(e) => {
                 e.stopPropagation();
-                setEventsMenuOpen(!eventsMenuOpen);
+                setIsEventsMenuOpen(!isEventsMenuOpen);
               }}
               className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-colors ${
                 isEventsActive()
@@ -197,7 +197,7 @@ export default function Layout({ children }) {
                 Events
               </div>
               <svg
-                className={`w-4 h-4 transition-transform ${eventsMenuOpen ? 'rotate-180' : ''}`}
+                className={`w-4 h-4 transition-transform ${isEventsMenuOpen ? 'rotate-180' : ''}`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -206,7 +206,7 @@ export default function Layout({ children }) {
               </svg>
             </button>
 
-            {eventsMenuOpen && (
+            {isEventsMenuOpen && (
               <div 
                 data-dropdown-menu="events"
                 className="mt-2 ml-4 space-y-1"
