@@ -16,6 +16,7 @@ export default function ApprovedEventsPage() {
   const [deletingId, setDeletingId] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [updatingStatusId, setUpdatingStatusId] = useState(null);
 
   // Helper function to get event ID from event object
   const getEventId = (event) => {
@@ -96,6 +97,46 @@ export default function ApprovedEventsPage() {
     }
     setSelectedEvent(event);
     setShowDeleteModal(true);
+  };
+
+  const handleStatusChange = async (event, newStatus) => {
+    const eventId = getEventId(event);
+    if (!eventId) {
+      setError('Event ID not found. Cannot update status.');
+      return;
+    }
+
+    setUpdatingStatusId(eventId);
+    setError('');
+    setSuccess('');
+
+    try {
+      const response = await adminAPI.updateEventStatus(eventId, newStatus);
+      if (response.success) {
+        // If status is no longer approved, remove from this list
+        if (newStatus !== 'approved') {
+          setEvents(events.filter((e) => getEventId(e) !== eventId));
+        } else {
+          // Otherwise, update the event in-place
+          setEvents(
+            events.map((e) =>
+              getEventId(e) === eventId ? { ...e, status: newStatus } : e
+            )
+          );
+        }
+        setSuccess(response.message || 'Event status updated successfully.');
+      } else {
+        setError(response.message || 'Failed to update event status');
+      }
+    } catch (err) {
+      const errorMessage =
+        err.message ||
+        err.response?.data?.message ||
+        'Failed to update event status';
+      setError(errorMessage);
+    } finally {
+      setUpdatingStatusId(null);
+    }
   };
 
   const handleConfirmDelete = async () => {
@@ -314,7 +355,17 @@ export default function ApprovedEventsPage() {
                         {event.createdBy?.email}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+                      <select
+                        value={event.status || 'approved'}
+                        onChange={(e) => handleStatusChange(event, e.target.value)}
+                        disabled={updatingStatusId === eventId}
+                        className="bg-[#1F1F1F] border border-[#374151] text-[#D1D5DB] text-xs px-2 py-1 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9333EA]"
+                      >
+                        <option value="approved">Approved</option>
+                        <option value="pending">Pending</option>
+                        <option value="cancelled">Cancelled</option>
+                      </select>
                       <button
                         onClick={() => handleDeleteClick(event)}
                         disabled={deletingId === eventId || !eventId}

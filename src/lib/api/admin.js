@@ -180,5 +180,37 @@ export const adminAPI = {
       throw error;
     }
   },
+
+  // Update Event Status (Admin only)
+  updateEventStatus: async (id, status) => {
+    try {
+      const response = await apiClient.put(`/events/${id}`, { status });
+      return response.data;
+    } catch (error) {
+      if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+        throw new Error(
+          `Cannot connect to backend server at ${API_BASE_URL}. ` +
+          `Please make sure the backend server is running and NEXT_PUBLIC_API_BASE_URL is set correctly in your .env.local file.`
+        );
+      }
+      throw error;
+    }
+  },
+
+  // Update Ticket Status (Admin only)
+  updateTicketStatus: async (id, status) => {
+    try {
+      const response = await apiClient.put(`/admin/tickets/${id}/status`, { status });
+      return response.data;
+    } catch (error) {
+      if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
+        throw new Error(
+          `Cannot connect to backend server at ${API_BASE_URL}. ` +
+          `Please make sure the backend server is running and NEXT_PUBLIC_API_BASE_URL is set correctly in your .env.local file.`
+        );
+      }
+      throw error;
+    }
+  },
 };
 
