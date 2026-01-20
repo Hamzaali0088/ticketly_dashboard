@@ -10,6 +10,7 @@ export default function Layout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
+  const [eventsMenuOpen, setEventsMenuOpen] = useState(false);
   const [usersMenuOpen, setUsersMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -107,6 +108,13 @@ export default function Layout({ children }) {
 
   const isActive = (path) => {
     return router.pathname === path;
+  };
+
+  const isEventsActive = () => {
+    return (
+      router.pathname === '/dashboard/events' ||
+      router.pathname.startsWith('/dashboard/events/')
+    );
   };
 
   return (
