@@ -167,6 +167,20 @@ export default function TicketsPage() {
     }
   };
 
+  const getStatusIcon = (status) => {
+    const normalized = (status || '').toLowerCase();
+    if (['pending', 'pending_payment', 'payment_in_review'].includes(normalized)) {
+      return { type: 'pending', bgClass: 'bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20', ariaLabel: 'Ticket status: Pending', title: 'Pending' };
+    }
+    if (['approved', 'submitted', 'confirmed'].includes(normalized)) {
+      return { type: 'approved', bgClass: 'bg-green-500/10 text-green-400 hover:bg-green-500/20', ariaLabel: 'Ticket status: Approved', title: 'Approved' };
+    }
+    if (['expired', 'rejected', 'cancelled', 'canceled'].includes(normalized)) {
+      return { type: 'rejected', bgClass: 'bg-red-500/10 text-red-400 hover:bg-red-500/20', ariaLabel: 'Ticket status: Expired or Rejected', title: 'Expired / Rejected' };
+    }
+    return { type: 'default', bgClass: 'bg-gray-500/10 text-gray-400 hover:bg-gray-500/20', ariaLabel: `Ticket status: ${status || 'Unknown'}`, title: getStatusLabel(status) };
+  };
+
   if (error) {
     return (
       <Layout>
@@ -266,43 +280,44 @@ export default function TicketsPage() {
   return (
     <Layout>
       <div className="h-full flex flex-col p-8 overflow-hidden">
-        <div className="flex items-center justify-between mb-8 flex-shrink-0">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6 flex-shrink-0">
           <h1 className="text-3xl font-bold text-white">Tickets</h1>
-          <div className="text-[#9CA3AF] text-sm">
-            Total: <span className="text-white font-semibold">{filteredTickets.length}</span>
-            {searchQuery && tickets.length !== filteredTickets.length && (
-              <span className="ml-2 text-[#9CA3AF]">
-                (of {tickets.length})
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Search Bar */}
-        <div className="mb-6 flex-shrink-0">
-          <div className="relative max-w-md">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg className="w-5 h-5 text-[#9CA3AF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="text-[#9CA3AF] text-sm whitespace-nowrap">
+              Total: <span className="text-white font-semibold">{filteredTickets.length}</span>
+              {searchQuery && tickets.length !== filteredTickets.length && (
+                <span className="ml-2 text-[#9CA3AF]">
+                  (of {tickets.length})
+                </span>
+              )}
             </div>
-            <input
-              type="text"
-              placeholder="Search tickets..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-[#2A2A2A] border border-[#374151] rounded-lg text-white placeholder-[#6B7280] focus:outline-none focus:ring-2 focus:ring-[#9333EA] focus:border-transparent"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#9CA3AF] hover:text-white"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <div className="relative w-full min-w-[200px] max-w-[280px] sm:max-w-md">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className="w-5 h-5 text-[#9CA3AF]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
-              </button>
-            )}
+              </div>
+              <input
+                type="text"
+                placeholder="Search tickets..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 bg-[#2A2A2A] border border-[#374151] rounded-lg text-white placeholder-[#6B7280] focus:outline-none focus:ring-2 focus:ring-[#9333EA] focus:border-transparent"
+                aria-label="Search tickets"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-[#9CA3AF] hover:text-white"
+                  aria-label="Clear search"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -318,20 +333,19 @@ export default function TicketsPage() {
           ) : (
             <DataTable
               columns={[
+                'Actions',
                 'Ticket ID',
                 'Event Name',
                 'Customer Name',
                 'Customer Email',
                 'Quantity',
                 'Total Price',
-                'Status',
                 'Payment Screenshot',
                 'Purchase Date',
-                'Actions',
               ]}
             >
               {loading ? (
-                <TableSkeleton columns={10} />
+                <TableSkeleton columns={9} />
               ) : (
                 filteredTickets.map((ticket) => {
                   // Map API response to display fields
@@ -342,11 +356,51 @@ export default function TicketsPage() {
                   const quantity = ticket.quantity || ticket.ticketQuantity || 0;
                   const totalPrice = ticket.totalPrice || ticket.price || ticket.amount || 0;
                   const rawStatus = ticket.status || 'confirmed';
-                  const status = getStatusLabel(rawStatus);
+                  const statusIconInfo = getStatusIcon(rawStatus);
                   const purchaseDate = ticket.purchaseDate || ticket.createdAt || ticket.date || new Date().toISOString();
-                  
+                  const statusIconSvg = statusIconInfo.type === 'pending' ? (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  ) : statusIconInfo.type === 'rejected' ? (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  );
                   return (
                     <tr key={ticketId} className="hover:bg-[#2A2A2A] transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleStatusClick(ticket)}
+                            className={`p-1.5 rounded-lg transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#9333EA] ${statusIconInfo.bgClass}`}
+                            aria-label={statusIconInfo.ariaLabel}
+                            title={statusIconInfo.title}
+                          >
+                            {statusIconSvg}
+                          </button>
+                          <span className="w-2 flex-shrink-0" aria-hidden="true" />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setTicketToDelete(ticket);
+                              setDeleteModalOpen(true);
+                            }}
+                            className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors focus:outline-none focus:ring-2 focus:ring-[#EF4444] cursor-pointer"
+                            aria-label="Delete ticket"
+                            title="Delete Ticket"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-white">{ticketId}</div>
                       </td>
@@ -364,15 +418,6 @@ export default function TicketsPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-white">${totalPrice}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <button
-                          type="button"
-                          onClick={() => handleStatusClick(ticket)}
-                          className={`px-2 py-1 text-xs font-medium rounded ${getStatusColor(rawStatus)} focus:outline-none focus:ring-2 focus:ring-[#9333EA]`}
-                        >
-                          {status}
-                        </button>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {ticket.paymentScreenshotUrl ? (
@@ -396,21 +441,6 @@ export default function TicketsPage() {
                         <div className="text-sm text-[#9CA3AF]">
                           {new Date(purchaseDate).toLocaleDateString()}
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setTicketToDelete(ticket);
-                            setDeleteModalOpen(true);
-                          }}
-                          className="text-[#EF4444] hover:text-[#DC2626] transition-colors focus:outline-none focus:ring-2 focus:ring-[#EF4444] rounded p-1"
-                          title="Delete Ticket"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
                       </td>
                     </tr>
                   );

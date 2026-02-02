@@ -223,7 +223,7 @@ export default function UsersPage() {
         )}
 
         {/* Search Bar */}
-        <div className="mb-6">
+        <div className="mb-6 ml-6">
           <div className="relative max-w-md">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <svg className="w-5 h-5 text-[#9CA3AF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -268,6 +268,7 @@ export default function UsersPage() {
         ) : (
           <DataTable
             columns={[
+              'Actions',
               'Full Name',
               'Email',
               'Username',
@@ -275,13 +276,40 @@ export default function UsersPage() {
               'Auth Provider',
               'Verified',
               'Created At',
-              'Actions',
             ]}
           >
             {loading ? (
               <TableSkeleton columns={8} />
             ) : filteredUsers.map((user) => (
                     <tr key={user.id || user._id} className="hover:bg-[#2A2A2A] transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleEditClick(user)}
+                            disabled={actionLoading}
+                            className="p-1.5 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            aria-label="Edit user"
+                            title="Edit user"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteClick(user)}
+                            disabled={actionLoading}
+                            className="p-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer focus:outline-none focus:ring-2 focus:ring-red-500"
+                            aria-label="Delete user"
+                            title="Delete user"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-white">
                           {user.fullName || user.name || 'N/A'}
@@ -330,24 +358,6 @@ export default function UsersPage() {
                           {user.createdAt
                             ? new Date(user.createdAt).toLocaleDateString()
                             : 'N/A'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleEditClick(user)}
-                            disabled={actionLoading}
-                            className="px-3 py-1.5 bg-blue-500 bg-opacity-20 text-blue-400 rounded hover:bg-opacity-30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteClick(user)}
-                            disabled={actionLoading}
-                            className="px-3 py-1.5 bg-red-500 bg-opacity-20 text-red-400 rounded hover:bg-opacity-30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-                          >
-                            Delete
-                          </button>
                         </div>
                       </td>
                     </tr>
